@@ -1,6 +1,7 @@
 'use client';
 
 import React from "react"
+import { useEffect } from "react"
 
 import { useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
@@ -23,8 +24,13 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [redirectUrl, setRedirectUrl] = useState('/');
 
-  const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/';
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setRedirectUrl(params.get('redirect') || '/');
+  }, []);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
