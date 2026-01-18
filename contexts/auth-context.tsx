@@ -26,10 +26,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = await api.getCurrentUser();
         setUser(userData);
       } else {
+        // Check for demo user in localStorage
+        if (typeof window !== 'undefined') {
+          const demoUser = localStorage.getItem('demo_user');
+          if (demoUser) {
+            try {
+              setUser(JSON.parse(demoUser));
+              return;
+            } catch (e) {
+              // Invalid demo user, continue to set null
+            }
+          }
+        }
         setUser(null);
       }
     } catch (error) {
       console.error('Failed to fetch user:', error);
+      // Check for demo user in localStorage as fallback
+      if (typeof window !== 'undefined') {
+        const demoUser = localStorage.getItem('demo_user');
+        if (demoUser) {
+          try {
+            setUser(JSON.parse(demoUser));
+            return;
+          } catch (e) {
+            // Invalid demo user, continue to logout
+          }
+        }
+      }
       api.logout();
       setUser(null);
     }
@@ -56,6 +80,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = () => {
     api.logout();
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('demo_user');
+    }
     setUser(null);
   };
 

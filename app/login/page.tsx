@@ -19,7 +19,7 @@ import Loading from './loading';
 
 function LoginForm() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, refreshUser } = useAuth();
   const { toast } = useToast();
 
   const [email, setEmail] = useState('');
@@ -58,10 +58,30 @@ function LoginForm() {
     } catch (error) {
       console.error('Login failed:', error);
       // Demo mode - simulate successful login
+      // Check if trying to login as agent (email contains 'agent' or redirect is to /agent)
+      const isAgentLogin = email.toLowerCase().includes('agent') || redirectUrl === '/agent';
+      const mockUser = {
+        id: 'demo-user',
+        email: email,
+        name: isAgentLogin ? 'Demo Agent' : 'Demo User',
+        role: (isAgentLogin ? 'AGENT' : 'USER') as 'AGENT' | 'USER',
+        created_at: new Date().toISOString(),
+      };
+      
+      // Set mock user in localStorage for demo mode
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('access_token', 'demo-token');
+        localStorage.setItem('demo_user', JSON.stringify(mockUser));
+      }
+      
+      // Refresh auth context to pick up the demo user
+      await refreshUser();
+      
       toast({
         title: 'Login successful!',
-        description: 'Welcome back (demo mode)',
+        description: `Welcome back as ${isAgentLogin ? 'Agent' : 'User'} (demo mode)`,
       });
+      
       router.push(redirectUrl);
     } finally {
       setIsLoading(false);
@@ -136,6 +156,12 @@ function LoginForm() {
                 Sign up
               </Link>
             </p>
+            <div className="text-xs text-muted-foreground text-center border-t pt-4 mt-2">
+              <p className="mb-1 font-medium">Demo Mode Tips:</p>
+              <p>• To login as <strong>Agent</strong>: Use an email containing "agent" or visit <Link href="/login?redirect=/agent" className="text-primary hover:underline">/login?redirect=/agent</Link></p>
+              <p>• To login as <strong>User</strong>: Use any other email</p>
+              <p className="mt-2">• Or <Link href="/register?role=AGENT" className="text-primary hover:underline">register as an Agent</Link> first</p>
+            </div>
           </CardFooter>
         </form>
       </Card>
