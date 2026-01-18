@@ -65,7 +65,7 @@ function SearchContent() {
             <SearchBar 
               variant="compact" 
               onSearch={handleSearch} 
-              initialLocation={location || ''}
+              initialToLocation={location || ''}
             />
           </div>
 
