@@ -3,7 +3,7 @@
 import React from "react"
 
 import { useState, Suspense } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,12 +16,13 @@ import { Loader2, Eye, EyeOff, User, Briefcase } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 import Loading from './loading';
 
-function RegisterForm({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+function RegisterForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register } = useAuth();
   const { toast } = useToast();
 
-  const defaultRole = (searchParams?.role as UserRole) || 'USER';
+  const defaultRole = (searchParams.get('role') as UserRole) || 'USER';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -225,10 +226,10 @@ function RegisterForm({ searchParams }: { searchParams: { [key: string]: string 
   );
 }
 
-export default function RegisterPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
+export default function RegisterPage() {
   return (
     <Suspense fallback={<Loading />}>
-      <RegisterForm searchParams={searchParams} />
+      <RegisterForm />
     </Suspense>
   );
 }
