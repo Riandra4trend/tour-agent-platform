@@ -16,12 +16,12 @@ import { Loader2, Eye, EyeOff, User, Briefcase } from 'lucide-react';
 import type { UserRole } from '@/lib/types';
 import Loading from './loading';
 
-function RegisterForm({ searchParams }) {
+function RegisterForm({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   const router = useRouter();
   const { register } = useAuth();
   const { toast } = useToast();
 
-  const defaultRole = (searchParams.get('role') as UserRole) || 'USER';
+  const defaultRole = (searchParams?.role as UserRole) || 'USER';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -225,7 +225,7 @@ function RegisterForm({ searchParams }) {
   );
 }
 
-export default function RegisterPage({ searchParams }) {
+export default function RegisterPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
   return (
     <Suspense fallback={<Loading />}>
       <RegisterForm searchParams={searchParams} />
