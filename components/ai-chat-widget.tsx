@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -29,12 +29,19 @@ export function AIChatWidget() {
   const [messages, setMessages] = useState<AIChatMessage[]>([]);
   const [inputMessage, setInputMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Filter states
   const [location, setLocation] = useState('');
   const [budget, setBudget] = useState('');
   const [days, setDays] = useState('');
   const [travelStyle, setTravelStyle] = useState('');
+
+  // Auto-scroll to bottom when messages change
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isLoading]);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -102,6 +109,13 @@ export function AIChatWidget() {
     }
   };
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
+
   return (
     <>
       {/* Floating Button */}
@@ -115,8 +129,8 @@ export function AIChatWidget() {
 
       {/* Chat Dialog */}
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[450px] h-[600px] flex flex-col p-0">
-          <DialogHeader className="px-4 py-3 border-b">
+        <DialogContent className="sm:max-w-[450px] h-[600px] flex flex-col p-0 gap-0">
+          <DialogHeader className="px-4 py-3 border-b flex-shrink-0">
             <DialogTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary" />
               AI Travel Assistant
@@ -125,7 +139,7 @@ export function AIChatWidget() {
 
           {/* Filters Section */}
           {messages.length === 0 && (
-            <div className="px-4 py-3 border-b bg-muted/50">
+            <div className="px-4 py-3 border-b bg-muted/50 flex-shrink-0">
               <p className="text-sm text-muted-foreground mb-3">
                 Tell me about your travel preferences:
               </p>
@@ -183,101 +197,101 @@ export function AIChatWidget() {
           )}
 
           {/* Messages Area */}
-          <ScrollArea className="flex-1 px-4 py-3">
-            <div className="space-y-4">
-              {messages.length === 0 && (
-                <div className="text-center text-muted-foreground py-8">
-                  <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                  <p className="text-sm">
-                    {"Hi! I'm your AI travel assistant. Ask me anything about tours in Indonesia!"}
-                  </p>
-                </div>
-              )}
-              
-              {messages.map((msg, idx) => (
-                <div
-                  key={idx}
-                  className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
-                  {msg.role === 'assistant' && (
-                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                      <Bot className="h-4 w-4 text-primary" />
-                    </div>
-                  )}
+          <div className="flex-1 overflow-hidden">
+            <ScrollArea className="h-full px-4 py-3" ref={scrollAreaRef}>
+              <div className="space-y-4">
+                {messages.length === 0 && (
+                  <div className="text-center text-muted-foreground py-8">
+                    <Bot className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p className="text-sm">
+                      {"Hi! I'm your AI travel assistant. Ask me anything about tours in Indonesia!"}
+                    </p>
+                  </div>
+                )}
+                
+                {messages.map((msg, idx) => (
                   <div
-                    className={`max-w-[80%] rounded-lg px-3 py-2 ${
-                      msg.role === 'user'
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted'
-                    }`}
+                    key={idx}
+                    className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    <p className="text-sm">{msg.content}</p>
-                    
-                    {/* Recommended Tours */}
-                    {msg.recommended_tours && msg.recommended_tours.length > 0 && (
-                      <div className="mt-3 space-y-2">
-                        {msg.recommended_tours.map((tour) => (
-                          <Link key={tour.id} href={`/tours/${tour.id}`} onClick={() => setIsOpen(false)}>
-                            <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
-                              <CardContent className="p-3">
-                                <h4 className="font-medium text-sm text-foreground">{tour.title}</h4>
-                                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                                  <MapPin className="h-3 w-3" />
-                                  {tour.location?.name}
-                                  <Star className="h-3 w-3 fill-accent text-accent ml-2" />
-                                  {tour.rating}
-                                </div>
-                                <p className="text-sm font-semibold text-primary mt-1">
-                                  {formatPrice(tour.price_per_person)}/person
-                                </p>
-                              </CardContent>
-                            </Card>
-                          </Link>
-                        ))}
+                    {msg.role === 'assistant' && (
+                      <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <Bot className="h-4 w-4 text-primary" />
+                      </div>
+                    )}
+                    <div
+                      className={`max-w-[80%] rounded-lg px-3 py-2 ${
+                        msg.role === 'user'
+                          ? 'bg-primary text-primary-foreground'
+                          : 'bg-muted'
+                      }`}
+                    >
+                      <p className="text-sm">{msg.content}</p>
+                      
+                      {/* Recommended Tours */}
+                      {msg.recommended_tours && msg.recommended_tours.length > 0 && (
+                        <div className="mt-3 space-y-2">
+                          {msg.recommended_tours.map((tour) => (
+                            <Link key={tour.id} href={`/tours/${tour.id}`} onClick={() => setIsOpen(false)}>
+                              <Card className="hover:bg-accent/50 transition-colors cursor-pointer">
+                                <CardContent className="p-3">
+                                  <h4 className="font-medium text-sm text-foreground">{tour.title}</h4>
+                                  <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                                    <MapPin className="h-3 w-3" />
+                                    {tour.location?.name}
+                                    <Star className="h-3 w-3 fill-accent text-accent ml-2" />
+                                    {tour.rating}
+                                  </div>
+                                  <p className="text-sm font-semibold text-primary mt-1">
+                                    {formatPrice(tour.price_per_person)}/person
+                                  </p>
+                                </CardContent>
+                              </Card>
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    {msg.role === 'user' && (
+                      <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                        <User className="h-4 w-4 text-primary-foreground" />
                       </div>
                     )}
                   </div>
-                  {msg.role === 'user' && (
-                    <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
-                      <User className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                  )}
-                </div>
-              ))}
+                ))}
 
-              {isLoading && (
-                <div className="flex gap-2">
-                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    <Bot className="h-4 w-4 text-primary" />
+                {isLoading && (
+                  <div className="flex gap-2">
+                    <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Bot className="h-4 w-4 text-primary" />
+                    </div>
+                    <div className="bg-muted rounded-lg px-3 py-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    </div>
                   </div>
-                  <div className="bg-muted rounded-lg px-3 py-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  </div>
-                </div>
-              )}
-            </div>
-          </ScrollArea>
+                )}
+                
+                {/* Invisible element for scrolling to bottom */}
+                <div ref={messagesEndRef} />
+              </div>
+            </ScrollArea>
+          </div>
 
           {/* Input Area */}
-          <div className="px-4 py-3 border-t">
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleSendMessage();
-              }}
-              className="flex gap-2"
-            >
+          <div className="px-4 py-3 border-t flex-shrink-0">
+            <div className="flex gap-2">
               <Input
                 value={inputMessage}
                 onChange={(e) => setInputMessage(e.target.value)}
+                onKeyPress={handleKeyPress}
                 placeholder="Ask about tours..."
                 disabled={isLoading}
                 className="flex-1"
               />
-              <Button type="submit" size="icon" disabled={isLoading}>
+              <Button onClick={handleSendMessage} size="icon" disabled={isLoading}>
                 <Send className="h-4 w-4" />
               </Button>
-            </form>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
